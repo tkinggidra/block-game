@@ -1,3 +1,4 @@
+
 package io.github.tkinggidra.blockgame.client.debug;
 
 import imgui.ImGui;
@@ -7,22 +8,28 @@ import static org.lwjgl.opengl.GL11.*;
 
 public final class DebugOverlay {
     public void render() {
-        ImGui.begin("block-game : version #" + BuildInfo.VERSION);
+        ImGui.begin("Block Game - Diagnostics");
 
-        ImGui.text("Engine Bootstrap");
-        ImGui.separator();
+        try {
+            ImGui.text("Engine Bootstrap");
+            ImGui.separator();
 
-        ImGui.text("FPS: %.1f".formatted(ImGui.getIO().getFramerate()));
-        ImGui.text("Frame time: %.2f ms".formatted(
-                1000.0f / Math.max(ImGui.getIO().getFramerate(), 0.001f)
-        ));
+            float fps = ImGui.getIO().getFramerate();
 
-        ImGui.separator();
+            ImGui.text("FPS: %.1f".formatted(fps));
+            ImGui.text("Frame time: %.2f ms".formatted(
+                    1000.0f / Math.max(fps, 0.001f)
+            ));
 
-        ImGui.text("Renderer: OpenGL");
-        ImGui.text("GPU: " + glGetString(GL_RENDERER));
-        ImGui.text("OpenGL: " + glGetString(GL_VERSION));
+            ImGui.separator();
 
-        ImGui.end();
+            ImGui.text("Renderer: OpenGL");
+            ImGui.text("GPU: " + glGetString(GL_RENDERER));
+            ImGui.text("OpenGL: " + glGetString(GL_VERSION));
+            ImGui.text("Version: " + BuildInfo.VERSION);
+
+        } finally {
+            ImGui.end();
+        }
     }
 }
