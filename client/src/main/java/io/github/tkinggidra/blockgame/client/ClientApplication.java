@@ -12,7 +12,7 @@ public final class ClientApplication {
     public void run() {
         try (GlfwRuntime glfw = new GlfwRuntime()) {
             Window window = glfw.createWindow(
-                    1280, 720,
+                    960, 480,
                     "Block Game - " + BuildInfo.VERSION
             );
 
