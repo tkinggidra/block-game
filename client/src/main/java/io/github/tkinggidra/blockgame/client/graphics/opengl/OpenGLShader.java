@@ -1,6 +1,10 @@
 
 package io.github.tkinggidra.blockgame.client.graphics.opengl;
 
+import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.FloatBuffer;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL11.GL_FALSE;
@@ -42,7 +46,6 @@ public final class OpenGLShader implements AutoCloseable {
 
             glAttachShader(program, vertexShader);
             glAttachShader(program, fragmentShader);
-
             glLinkProgram(program);
 
             if (glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) {
@@ -111,6 +114,29 @@ public final class OpenGLShader implements AutoCloseable {
     public void unbind() {
         ensureOpen();
         glUseProgram(0);
+    }
+
+    public void setMatrix4(String name, Matrix4f matrix) {
+        ensureOpen();
+
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(matrix, "matrix");
+
+        int location = glGetUniformLocation(programId, name);
+
+        if (location == -1) {
+            throw new IllegalArgumentException(
+                    "Shader uniform not found: " + name
+            );
+        }
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer buffer = stack.mallocFloat(16);
+
+            matrix.get(0, buffer);
+
+            glUniformMatrix4fv(location, false, buffer);
+        }
     }
 
     private void ensureOpen() {

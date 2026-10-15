@@ -61,7 +61,8 @@ application {
     mainClass = "io.github.tkinggidra.blockgame.client.Main"
 
     applicationDefaultJvmArgs = listOf(
-        "--enable-native-access=ALL-UNNAMED"
+        "--enable-native-access=ALL-UNNAMED",
+        "-Djoml.nounsafe=true"
     )
 }
 

@@ -63,6 +63,26 @@ public final class Window implements AutoCloseable {
         return glfwWindowShouldClose(handle);
     }
 
+    public float framebufferAspectRatio() {
+        ensureOpen();
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            var width = stack.mallocInt(1);
+            var height = stack.mallocInt(1);
+
+            glfwGetFramebufferSize(handle, width, height);
+
+            int framebufferWidth = width.get(0);
+            int framebufferHeight = height.get(0);
+
+            if (framebufferWidth <= 0 || framebufferHeight <= 0) {
+                return 0.0f;
+            }
+
+            return (float) framebufferWidth / framebufferHeight;
+        }
+    }
+
     public void updateViewport() {
         ensureOpen();
 
