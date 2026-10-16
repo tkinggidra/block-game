@@ -1,9 +1,11 @@
-
 package io.github.tkinggidra.blockgame.client;
 
-import io.github.tkinggidra.blockgame.client.debug.DebugOverlay;
+import io.github.tkinggidra.blockgame.client.debug.DeveloperWorkspace;
+import io.github.tkinggidra.blockgame.client.debug.GameView;
 import io.github.tkinggidra.blockgame.client.debug.ImGuiLayer;
 import io.github.tkinggidra.blockgame.client.debug.RenderSmokeTest;
+import io.github.tkinggidra.blockgame.client.graphics.opengl.OpenGLFramebuffer;
+import io.github.tkinggidra.blockgame.client.input.DeveloperShortcut;
 import io.github.tkinggidra.blockgame.client.window.GlfwRuntime;
 import io.github.tkinggidra.blockgame.client.window.Window;
 
@@ -18,26 +20,35 @@ public final class ClientApplication {
             );
 
             try (RenderSmokeTest renderTest = new RenderSmokeTest();
-                 ImGuiLayer imgui = new ImGuiLayer(window.getHandle())) {
-                DebugOverlay debugOverlay = new DebugOverlay();
+                 DeveloperShortcut shortcut = new DeveloperShortcut(window.getHandle());
+                 ImGuiLayer imgui = new ImGuiLayer(window.getHandle());
+                 OpenGLFramebuffer framebuffer = new OpenGLFramebuffer(1, 1)) {
+
+                DeveloperWorkspace workspace = new DeveloperWorkspace();
+                GameView.SceneRenderer renderer = renderTest::render;
 
                 while (!window.shouldClose()) {
                     glfw.pollEvents();
+                    imgui.setEnabled(shortcut.isOpen());
 
                     window.updateViewport();
 
                     glClearColor(0.00f, 0.09f, 0.12f, 1.0f);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-                    float aspectRatio = window.framebufferAspectRatio();
+                    if (!shortcut.isOpen()) {
+                        float aspectRatio = window.framebufferAspectRatio();
 
-                    if (aspectRatio > 0.0f) {
-                        renderTest.render(aspectRatio);
+                        if (aspectRatio > 0.0f) {
+                            renderTest.render(aspectRatio);
+                        }
                     }
 
-                    imgui.beginFrame();
-                    debugOverlay.render();
-                    imgui.endFrame();
+                    if (shortcut.isOpen()) {
+                        imgui.beginFrame();
+                        workspace.render(framebuffer, renderer);
+                        imgui.endFrame();
+                    }
 
                     window.swapBuffers();
                 }
