@@ -12,7 +12,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public final class RenderSmokeTest implements AutoCloseable {
-
     private static final String VERTEX_SHADER = """
             #version 330 core
 

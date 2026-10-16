@@ -18,8 +18,8 @@ public final class DeveloperWorkspace {
     private final DebugOverlay diagnostics = new DebugOverlay();
     private final ConsolePanel console = new ConsolePanel();
 
-    private final ImBoolean diagnosticsOpen = new ImBoolean();
-    private final ImBoolean consoleOpen = new ImBoolean();
+    private final ImBoolean diagnosticsOpen = new ImBoolean(true);
+    private final ImBoolean consoleOpen = new ImBoolean(true);
     private final ImBoolean aboutOpen = new ImBoolean();
 
     private boolean initialized;
@@ -55,8 +55,9 @@ public final class DeveloperWorkspace {
             renderMenuBar();
 
             int dockspaceId = ImGui.getID(DOCKSPACE_ID);
+            boolean restorePanels = !initialized || resetLayout;
 
-            if (!initialized || resetLayout) {
+            if (restorePanels) {
                 // Check before dockSpace(), which would create an empty node.
                 var existingNode = imgui.internal.ImGui.dockBuilderGetNode(dockspaceId);
 
@@ -83,10 +84,18 @@ public final class DeveloperWorkspace {
             gameView.render(framebuffer, renderer);
 
             if (diagnosticsOpen.get()) {
+                if (restorePanels) {
+                    ImGui.setNextWindowCollapsed(false);
+                }
+
                 diagnostics.render(diagnosticsOpen);
             }
 
             if (consoleOpen.get()) {
+                if (restorePanels) {
+                    ImGui.setNextWindowCollapsed(false);
+                }
+
                 console.render(consoleOpen);
             }
 
@@ -156,6 +165,9 @@ public final class DeveloperWorkspace {
     }
 
     private void initializeLayout(int dockspaceId) {
+        diagnosticsOpen.set(true);
+        consoleOpen.set(true);
+
         imgui.internal.ImGui.dockBuilderRemoveNode(dockspaceId);
         imgui.internal.ImGui.dockBuilderAddNode(
                 dockspaceId, imgui.internal.flag.ImGuiDockNodeFlags.DockSpace

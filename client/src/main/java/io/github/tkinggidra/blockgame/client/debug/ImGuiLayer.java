@@ -18,7 +18,6 @@ import static org.lwjgl.glfw.GLFW.glfwSetCursor;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class ImGuiLayer implements AutoCloseable {
-
     private static final float UI_SCALE = 1.5f;
     private static final float BASE_FONT_SIZE = 10.0f;
 

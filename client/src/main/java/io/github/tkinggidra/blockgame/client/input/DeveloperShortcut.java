@@ -6,7 +6,6 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import static org.lwjgl.glfw.GLFW.*;
 
 public final class DeveloperShortcut implements AutoCloseable {
-
     private final long windowHandle;
     private final GLFWKeyCallback callback;
     private final GLFWKeyCallback previousCallback;

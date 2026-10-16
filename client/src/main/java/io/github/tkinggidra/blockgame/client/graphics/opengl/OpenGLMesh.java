@@ -11,7 +11,6 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public final class OpenGLMesh implements AutoCloseable {
-
     private final int vao;
     private final int vbo;
     private final int ebo;

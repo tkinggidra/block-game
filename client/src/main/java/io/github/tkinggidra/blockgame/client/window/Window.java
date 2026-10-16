@@ -1,6 +1,7 @@
 
 package io.github.tkinggidra.blockgame.client.window;
 
+import org.lwjgl.glfw.GLFWWindowRefreshCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
@@ -10,10 +11,17 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public final class Window implements AutoCloseable {
     private final long handle;
+    private final Thread ownerThread = Thread.currentThread();
+    private final GLFWWindowRefreshCallback refreshCallback;
+
+    private Runnable frameRenderer;
+    private Throwable frameFailure;
+    private boolean rendering;
     private boolean closed;
 
     Window(int width, int height, String title) {
         long createdHandle = NULL;
+        GLFWWindowRefreshCallback createdRefreshCallback = null;
 
         try {
             glfwDefaultWindowHints();
@@ -38,10 +46,20 @@ public final class Window implements AutoCloseable {
                 );
             }
 
+            glfwSetWindowSizeLimits(
+                    createdHandle, width, height,
+                    GLFW_DONT_CARE, GLFW_DONT_CARE
+            );
+
             glfwMakeContextCurrent(createdHandle);
             GL.createCapabilities();
 
             glfwSwapInterval(1);
+
+            createdRefreshCallback = GLFWWindowRefreshCallback.create(
+                    ignored -> refresh()
+            );
+            glfwSetWindowRefreshCallback(createdHandle, createdRefreshCallback);
 
             glfwShowWindow(createdHandle);
 
@@ -52,10 +70,77 @@ public final class Window implements AutoCloseable {
                 glfwDestroyWindow(createdHandle);
             }
 
+            if (createdRefreshCallback != null) {
+                createdRefreshCallback.free();
+            }
+
             throw failure;
         }
 
         this.handle = createdHandle;
+        this.refreshCallback = createdRefreshCallback;
+    }
+
+    void setFrameRenderer(Runnable renderer) {
+        ensureOpen();
+
+        if (renderer != null && frameRenderer != null) {
+            throw new IllegalStateException("A render loop is already running");
+        }
+
+        frameRenderer = renderer;
+    }
+
+    void checkFrameFailure() {
+        if (frameFailure instanceof RuntimeException failure) {
+            throw failure;
+        }
+
+        if (frameFailure instanceof Error failure) {
+            throw failure;
+        }
+    }
+
+    boolean renderFrame() {
+        ensureOpen();
+        checkFrameFailure();
+
+        if (rendering || frameRenderer == null) {
+            return false;
+        }
+
+        if (Thread.currentThread() != ownerThread || glfwGetCurrentContext() != handle) {
+            throw new IllegalStateException("Rendering requires the owning thread and context");
+        }
+
+        rendering = true;
+
+        try {
+            if (glfwGetWindowAttrib(handle, GLFW_ICONIFIED) == GLFW_TRUE
+                    || !updateViewport()) {
+                return false;
+            }
+
+            frameRenderer.run();
+            swapBuffers();
+            return true;
+        } finally {
+            rendering = false;
+        }
+    }
+
+    private void refresh() {
+        if (frameRenderer == null || frameFailure != null) {
+            return;
+        }
+
+        try {
+            // Windows can request redraws while its sizing loop holds pollEvents().
+            renderFrame();
+        } catch (RuntimeException | Error failure) {
+            // Propagate after native event dispatch returns, not through its callback.
+            frameFailure = failure;
+        }
     }
 
     public boolean shouldClose() {
@@ -83,7 +168,7 @@ public final class Window implements AutoCloseable {
         }
     }
 
-    public void updateViewport() {
+    public boolean updateViewport() {
         ensureOpen();
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -92,7 +177,12 @@ public final class Window implements AutoCloseable {
 
             glfwGetFramebufferSize(handle, width, height);
 
+            if (width.get(0) <= 0 || height.get(0) <= 0) {
+                return false;
+            }
+
             glViewport(0, 0, width.get(0), height.get(0));
+            return true;
         }
     }
 
@@ -119,6 +209,10 @@ public final class Window implements AutoCloseable {
         }
 
         closed = true;
+        frameRenderer = null;
+
+        glfwSetWindowRefreshCallback(handle, null);
+        refreshCallback.free();
 
         glfwMakeContextCurrent(NULL);
         GL.setCapabilities(null);

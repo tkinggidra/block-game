@@ -27,11 +27,8 @@ public final class ClientApplication {
                 DeveloperWorkspace workspace = new DeveloperWorkspace();
                 GameView.SceneRenderer renderer = renderTest::render;
 
-                while (!window.shouldClose()) {
-                    glfw.pollEvents();
+                glfw.runLoop(() -> {
                     imgui.setEnabled(shortcut.isOpen());
-
-                    window.updateViewport();
 
                     glClearColor(0.00f, 0.09f, 0.12f, 1.0f);
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -49,9 +46,7 @@ public final class ClientApplication {
                         workspace.render(framebuffer, renderer);
                         imgui.endFrame();
                     }
-
-                    window.swapBuffers();
-                }
+                });
             }
         }
     }

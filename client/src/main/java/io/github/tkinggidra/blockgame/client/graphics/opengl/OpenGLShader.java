@@ -11,7 +11,6 @@ import static org.lwjgl.opengl.GL11.GL_FALSE;
 import static org.lwjgl.opengl.GL20.*;
 
 public final class OpenGLShader implements AutoCloseable {
-
     private final int programId;
     private boolean closed;
 

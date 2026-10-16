@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public final class OpenGLFramebuffer implements AutoCloseable {
-
     private final int framebuffer;
     private final int colorTexture;
     private final int depthRenderbuffer;
