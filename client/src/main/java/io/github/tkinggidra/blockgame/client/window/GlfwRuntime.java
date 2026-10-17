@@ -3,6 +3,8 @@ package io.github.tkinggidra.blockgame.client.window;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
 
+import java.util.Objects;
+
 import static org.lwjgl.glfw.GLFW.*;
 
 public final class GlfwRuntime implements AutoCloseable {
@@ -60,6 +62,35 @@ public final class GlfwRuntime implements AutoCloseable {
     public void pollEvents() {
         ensureOpen();
         glfwPollEvents();
+    }
+
+    public void runLoop(Runnable renderFrame) {
+        ensureOpen();
+
+        if (window == null) {
+            throw new IllegalStateException("Create a window before running the render loop");
+        }
+
+        window.setFrameRenderer(Objects.requireNonNull(renderFrame, "renderFrame"));
+
+        try {
+            while (!window.shouldClose()) {
+                pollEvents();
+                window.checkFrameFailure();
+
+                if (window.shouldClose()) {
+                    break;
+                }
+
+                if (!window.renderFrame()) {
+                    // Minimized and zero-sized windows have nothing to present.
+                    glfwWaitEventsTimeout(0.1);
+                    window.checkFrameFailure();
+                }
+            }
+        } finally {
+            window.setFrameRenderer(null);
+        }
     }
 
     private void ensureOpen() {
