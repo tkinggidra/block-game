@@ -58,7 +58,7 @@ dependencies {
 
 // Application
 application {
-    mainClass = "io.github.tkinggidra.blockgame.client.Main"
+    mainClass = "blockgame.client.Main"
 
     applicationDefaultJvmArgs = listOf(
         "--enable-native-access=ALL-UNNAMED",
